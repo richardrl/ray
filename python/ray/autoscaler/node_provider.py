@@ -122,6 +122,7 @@ def get_node_provider(provider_config, cluster_name):
         raise NotImplementedError("Unsupported node provider: {}".format(
             provider_config["type"]))
     _, provider_cls = importer()
+
     return provider_cls(provider_config, cluster_name)
 
 

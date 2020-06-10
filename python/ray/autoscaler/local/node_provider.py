@@ -56,6 +56,11 @@ class ClusterState:
                 else:
                     assert workers[provider_config["head_ip"]]["tags"][
                         TAG_RAY_NODE_TYPE] == NODE_TYPE_HEAD
+
+                if "docker" in provider_config:
+                    if provider_config["docker"]["container_name"] and provider_config["docker"]["image"]:
+                        workers[provider_config["head_ip"]]["tags"]["docker"] = provider_config["docker"]
+
                 assert len(workers) == len(provider_config["worker_ips"]) + 1
                 with open(self.save_path, "w") as f:
                     logger.debug("ClusterState: "
@@ -90,6 +95,7 @@ class LocalNodeProvider(NodeProvider):
 
     def __init__(self, provider_config, cluster_name):
         NodeProvider.__init__(self, provider_config, cluster_name)
+
         self.state = ClusterState("/tmp/cluster-{}.lock".format(cluster_name),
                                   "/tmp/cluster-{}.state".format(cluster_name),
                                   provider_config)
@@ -143,7 +149,16 @@ class LocalNodeProvider(NodeProvider):
                     return
 
     def terminate_node(self, node_id):
-        workers = self.state.get()
-        info = workers[node_id]
+        nodes = self.state.get()
+        info = nodes[node_id]
         info["state"] = "terminated"
+
+        if "docker" in info["tags"]:
+            print("Docker found in terminated node")
+            import subprocess
+            completed_p = subprocess.run(f"docker kill {info['tags']['docker']['container_name']}".split(" "), )
+            completed_p = subprocess.run(f"docker rm {info['tags']['docker']['container_name']}".split(" "))
         self.state.put(node_id, info)
+
+        print("terminate_node")
+        print(nodes)

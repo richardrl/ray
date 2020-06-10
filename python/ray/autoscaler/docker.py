@@ -58,6 +58,8 @@ def dockerize_if_needed(config):
         config["worker_start_ray_commands"],
         container_name=cname,
         env_vars=["RAY_HEAD_IP"])
+    print("Head setup commands")
+    print(config["head_setup_commands"])
 
     return config
 
@@ -68,7 +70,7 @@ def with_docker_exec(cmds, container_name, env_vars=None):
         env_str = " ".join(
             ["-e {env}=${env}".format(env=env) for env in env_vars])
     return [
-        "docker exec {} {} /bin/sh -c {} ".format(env_str, container_name,
+        "docker exec -it {} {} /bin/sh -c {} ".format(env_str, container_name,
                                                   quote(cmd)) for cmd in cmds
     ]
 
@@ -103,11 +105,12 @@ def docker_start_cmds(user, image, mount, cname, user_options):
         "docker", "inspect", "-f", "'{{.State.Running}}'", cname, "||"
     ]
     docker_run = [
-        "docker", "run", "--rm", "--name {}".format(cname), "-d", "-it",
+        "docker", "run", "--rm", "-d", "-it", "--name {}".format(cname),
         port_flags, mount_flags, env_flags, user_options_str, "--net=host",
         image, "bash"
     ]
     cmds.append(" ".join(docker_check + docker_run))
+    # cmds.append(" ".join(docker_run))
 
     return cmds
 

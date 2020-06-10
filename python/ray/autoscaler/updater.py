@@ -273,13 +273,20 @@ class SSHCommandRunner:
                     "SSH command Failed. See above for the output from the"
                     " failure.") from None
 
-    def run_rsync_up(self, source, target):
+    def run_rsync_up(self, source, target, exclude_dirs=None):
         self.set_ssh_ip_if_required()
-        self.process_runner.check_call([
-            "rsync", "--rsh",
-            " ".join(["ssh"] + self.get_default_ssh_options(120)), "-avz",
-            source, "{}@{}:{}".format(self.ssh_user, self.ssh_ip, target)
-        ])
+        exclude_dirs = [".git"]
+        exclude_cmds = ["--exclude={}".format(dir) for dir in exclude_dirs]
+        try:
+            self.process_runner.check_output([
+                "rsync",
+                "-e",
+                " ".join(["ssh"] + self.get_default_ssh_options(120)),
+                "-avz", *exclude_cmds, source, "{}@{}:{}".format(self.ssh_user, self.ssh_ip, target)
+            ], )
+        except subprocess.CalledProcessError as grepexc:
+            print("error code", grepexc.returncode, grepexc.output)
+
 
     def run_rsync_down(self, source, target):
         self.set_ssh_ip_if_required()
@@ -307,14 +314,27 @@ class DockerCommandRunner(SSHCommandRunner):
             exit_on_fail=False,
             port_forward=None,
             with_output=False):
-        return self.ssh_command_runner.run(cmd, timeout, allocate_tty,
-                                           exit_on_fail, port_forward,
+
+        return self.ssh_command_runner.run(cmd,
+                                           # allocate_tty,
+                                           timeout,
+                                           exit_on_fail,
+                                           port_forward,
                                            with_output)
 
     def run_rsync_up(self, source, target):
         self.ssh_command_runner.run_rsync_up(source, target)
+        assert target[-1] != ".", "Target must not end in ."
+
+        if os.path.isdir(target):
+            docker_source = os.path.join(target, ".")
+        else:
+            docker_source = target
         self.ssh_command_runner.run("docker cp {} {}:{}".format(
-            target, self.docker_name, self.docker_expand_user(target)))
+            docker_source, self.docker_name, self.docker_expand_user(target)))
+
+    def run_rsync_up_ssh_only(self, source, target):
+        self.ssh_command_runner.run_rsync_up(source, target)
 
     def run_rsync_down(self, source, target):
         self.ssh_command_runner.run("docker cp {}:{} {}".format(
@@ -331,7 +351,7 @@ class DockerCommandRunner(SSHCommandRunner):
         if string.find("~") == 0:
             return string.replace(
                 "~",
-                "`docker exec ray_docker env | grep HOME | cut -d'=' -f2`", 1)
+                "`docker exec {} env | grep HOME | cut -d'=' -f2`".format(self.docker_name), 1)
         else:
             return string
 
@@ -427,7 +447,6 @@ class NodeUpdater:
                 try:
                     logger.debug(self.log_prefix +
                                  "Waiting for remote shell...")
-
                     self.cmd_runner.run("uptime", timeout=5)
                     logger.debug("Uptime succeeded.")
                     return True
@@ -451,6 +470,7 @@ class NodeUpdater:
 
         node_tags = self.provider.node_tags(self.node_id)
         logger.debug("Node tags: {}".format(str(node_tags)))
+
         if node_tags.get(TAG_RAY_RUNTIME_CONFIG) == self.runtime_hash:
             logger.info(self.log_prefix +
                         "{} already up-to-date, skip to ray start".format(
@@ -458,7 +478,6 @@ class NodeUpdater:
         else:
             self.provider.set_node_tags(
                 self.node_id, {TAG_RAY_NODE_STATUS: STATUS_SYNCING_FILES})
-            self.sync_file_mounts(self.rsync_up)
 
             # Run init commands
             self.provider.set_node_tags(
@@ -469,11 +488,15 @@ class NodeUpdater:
                 for cmd in self.initialization_commands:
                     self.cmd_runner.run(cmd)
 
+            if isinstance(self.cmd_runner, DockerCommandRunner):
+                self.sync_file_mounts(self.rsync_up_ssh_only)
+            else:
+                self.sync_file_mounts(self.rsync_up)
+
             with LogTimer(
                     self.log_prefix + "Setup commands", show_status=True):
                 for cmd in self.setup_commands:
                     self.cmd_runner.run(cmd)
-
         with LogTimer(
                 self.log_prefix + "Ray start commands", show_status=True):
             for cmd in self.ray_start_commands:
@@ -484,7 +507,13 @@ class NodeUpdater:
                     "Syncing {} to {}...".format(source, target))
         self.cmd_runner.run_rsync_up(source, target)
 
-    def rsync_down(self, source, target):
+    def rsync_up_ssh_only(self, source, target, ssh_only=False):
+        logger.info(self.log_prefix +
+                    "Syncing {} to {}...".format(source, target))
+        self.cmd_runner.run_rsync_up_ssh_only(source, target)
+
+
+def rsync_down(self, source, target):
         logger.info(self.log_prefix +
                     "Syncing {} from {}...".format(source, target))
         self.cmd_runner.run_rsync_down(source, target)

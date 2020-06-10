@@ -228,6 +228,8 @@ class StandardAutoscaler:
             self.recover_if_needed(node_id, now)
 
     def reload_config(self, errors_fatal=False):
+        import pdb
+        pdb.set_trace()
         try:
             with open(self.config_path) as f:
                 new_config = yaml.safe_load(f.read())

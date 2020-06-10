@@ -39,6 +39,9 @@ def create_or_update_cluster(config_file, override_min_workers,
     if override_cluster_name is not None:
         config["cluster_name"] = override_cluster_name
     config = _bootstrap_config(config)
+    print("Config")
+    from pprint import pprint
+    pprint(config)
     get_or_create_head_node(config, config_file, no_restart, restart_only, yes,
                             override_cluster_name)
 
@@ -83,7 +86,6 @@ def teardown_cluster(config_file, yes, workers_only, override_cluster_name,
     try:
 
         def remaining_nodes():
-
             workers = provider.non_terminated_nodes({
                 TAG_RAY_NODE_TYPE: NODE_TYPE_WORKER
             })
@@ -106,6 +108,7 @@ def teardown_cluster(config_file, yes, workers_only, override_cluster_name,
         # Loop here to check that both the head and worker nodes are actually
         #   really gone
         A = remaining_nodes()
+
         with LogTimer("teardown_cluster: done."):
             while A:
                 logger.info("teardown_cluster: "
@@ -188,6 +191,9 @@ def warn_about_bad_start_command(start_commands):
 def get_or_create_head_node(config, config_file, no_restart, restart_only, yes,
                             override_cluster_name):
     """Create the cluster head node, which in turn creates the workers."""
+    if "docker" in config:
+        config["provider"]["docker"] = config["docker"]
+
     provider = get_node_provider(config["provider"], config["cluster_name"])
     config_file = os.path.abspath(config_file)
     try:
@@ -262,6 +268,7 @@ def get_or_create_head_node(config, config_file, no_restart, restart_only, yes,
             config["file_mounts"].update({
                 remote_key_path: config["auth"]["ssh_private_key"],
             })
+
 
         if restart_only:
             init_commands = []
@@ -396,6 +403,7 @@ def exec_cluster(config_file,
         config, config_file, override_cluster_name, create_if_needed=start)
 
     provider = get_node_provider(config["provider"], config["cluster_name"])
+
     try:
         updater = NodeUpdaterThread(
             node_id=head_node,
@@ -482,7 +490,8 @@ def rsync(config_file,
           target,
           override_cluster_name,
           down,
-          all_nodes=False):
+          all_nodes=False,
+          ssh_only=False):
     """Rsyncs files.
 
     Arguments:
@@ -534,7 +543,10 @@ def rsync(config_file,
             if down:
                 rsync = updater.rsync_down
             else:
-                rsync = updater.rsync_up
+                if ssh_only:
+                    rsync = updater.rsync_up_ssh_only
+                else:
+                    rsync = updater.rsync_up
 
             if source and target:
                 rsync(source, target)

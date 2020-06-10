@@ -821,9 +821,10 @@ def submit(cluster_config_file, docker, screen, tmux, stop, start,
     Example:
         >>> ray submit [CLUSTER.YAML] experiment.py -- --smoke-test
     """
+    import pdb
+    pdb.set_trace()
     assert not (screen and tmux), "Can specify only one of `screen` or `tmux`."
     assert not (script_args and args), "Use -- --arg1 --arg2 for script args."
-
     if args:
         logger.warning(
             "ray submit [yaml] [script.py] --args=... is deprecated and "
@@ -835,7 +836,9 @@ def submit(cluster_config_file, docker, screen, tmux, stop, start,
                                  True, cluster_name)
 
     target = os.path.join("~", os.path.basename(script))
-    rsync(cluster_config_file, script, target, cluster_name, down=False)
+    import pdb
+    pdb.set_trace()
+    rsync(cluster_config_file, script, target, cluster_name, down=False, ssh_only=False)
 
     command_parts = ["python", target]
     if script_args:
@@ -845,6 +848,7 @@ def submit(cluster_config_file, docker, screen, tmux, stop, start,
 
     port_forward = [(port, port) for port in list(port_forward)]
     cmd = " ".join(command_parts)
+
     exec_cluster(
         cluster_config_file,
         cmd,
