@@ -821,8 +821,6 @@ def submit(cluster_config_file, docker, screen, tmux, stop, start,
     Example:
         >>> ray submit [CLUSTER.YAML] experiment.py -- --smoke-test
     """
-    import pdb
-    pdb.set_trace()
     assert not (screen and tmux), "Can specify only one of `screen` or `tmux`."
     assert not (script_args and args), "Use -- --arg1 --arg2 for script args."
     if args:
@@ -836,8 +834,6 @@ def submit(cluster_config_file, docker, screen, tmux, stop, start,
                                  True, cluster_name)
 
     target = os.path.join("~", os.path.basename(script))
-    import pdb
-    pdb.set_trace()
     rsync(cluster_config_file, script, target, cluster_name, down=False, ssh_only=False)
 
     command_parts = ["python", target]

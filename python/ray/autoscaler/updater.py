@@ -479,6 +479,10 @@ class NodeUpdater:
             self.provider.set_node_tags(
                 self.node_id, {TAG_RAY_NODE_STATUS: STATUS_SYNCING_FILES})
 
+            if isinstance(self.cmd_runner, DockerCommandRunner):
+                self.sync_file_mounts(self.rsync_up_ssh_only)
+            else:
+                self.sync_file_mounts(self.rsync_up)
             # Run init commands
             self.provider.set_node_tags(
                 self.node_id, {TAG_RAY_NODE_STATUS: STATUS_SETTING_UP})
@@ -487,11 +491,6 @@ class NodeUpdater:
                     show_status=True):
                 for cmd in self.initialization_commands:
                     self.cmd_runner.run(cmd)
-
-            if isinstance(self.cmd_runner, DockerCommandRunner):
-                self.sync_file_mounts(self.rsync_up_ssh_only)
-            else:
-                self.sync_file_mounts(self.rsync_up)
 
             with LogTimer(
                     self.log_prefix + "Setup commands", show_status=True):
