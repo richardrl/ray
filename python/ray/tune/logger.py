@@ -199,6 +199,8 @@ class TBXLogger(Logger):
         self.last_result = None
 
     def on_result(self, result):
+        # import pdb
+        # pdb.set_trace()
         step = result.get(TIMESTEPS_TOTAL) or result[TRAINING_ITERATION]
 
         tmp = result.copy()
@@ -219,6 +221,8 @@ class TBXLogger(Logger):
                 self._file_writer.add_scalar(
                     full_attr, value, global_step=step)
             elif type(value) in [list, np.ndarray] and len(value) > 0:
+                import pdb
+                pdb.set_trace()
                 valid_result[full_attr] = value
                 try:
                     self._file_writer.add_histogram(

@@ -179,6 +179,8 @@ class TrainingOperator:
 
         self.model.train()
         for batch_idx, batch in enumerate(iterator):
+            # import pdb
+            # pdb.set_trace()
             batch_info = {
                 "batch_idx": batch_idx,
                 "global_step": self.global_step
@@ -202,7 +204,6 @@ class TrainingOperator:
 
         if self.scheduler and info.get(SCHEDULER_STEP) == SCHEDULER_STEP_EPOCH:
             self.scheduler.step()
-
         return metric_meters.summary()
 
     def train_batch(self, batch, batch_info):

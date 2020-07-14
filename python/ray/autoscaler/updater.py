@@ -147,8 +147,7 @@ class KubernetesCommandRunner:
 
 class SSHCommandRunner:
     def __init__(self, log_prefix, node_id, provider, auth_config,
-                 cluster_name, process_runner, use_internal_ip):
-
+                 cluster_name, process_runner, use_internal_ip, exclude_list=None):
         ssh_control_hash = hashlib.md5(cluster_name.encode()).hexdigest()
         ssh_user_hash = hashlib.md5(getuser().encode()).hexdigest()
         ssh_control_path = "/tmp/ray_ssh_{}/{}".format(
@@ -164,6 +163,7 @@ class SSHCommandRunner:
         self.ssh_user = auth_config["ssh_user"]
         self.ssh_control_path = ssh_control_path
         self.ssh_ip = None
+        self.exclude_list = exclude_list
 
     def get_default_ssh_options(self, connect_timeout):
         OPTS = [
@@ -273,10 +273,9 @@ class SSHCommandRunner:
                     "SSH command Failed. See above for the output from the"
                     " failure.") from None
 
-    def run_rsync_up(self, source, target, exclude_dirs=None):
+    def run_rsync_up(self, source, target):
         self.set_ssh_ip_if_required()
-        exclude_dirs = [".git"]
-        exclude_cmds = ["--exclude={}".format(dir) for dir in exclude_dirs]
+        exclude_cmds = ["--exclude={}".format(item) for item in self.exclude_list]
         try:
             self.process_runner.check_output([
                 "rsync",
@@ -366,6 +365,7 @@ class NodeUpdater:
                  auth_config,
                  cluster_name,
                  file_mounts,
+                 exclude_list,
                  initialization_commands,
                  setup_commands,
                  ray_start_commands,
@@ -379,7 +379,7 @@ class NodeUpdater:
                            or provider_config.get("use_internal_ips", False))
         self.cmd_runner = provider.get_command_runner(
             self.log_prefix, node_id, auth_config, cluster_name,
-            process_runner, use_internal_ip, docker_config)
+            process_runner, use_internal_ip, docker_config, exclude_list)
 
         self.daemon = True
         self.process_runner = process_runner

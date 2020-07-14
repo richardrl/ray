@@ -211,6 +211,9 @@
             "type": "object",
             "description": "Map of remote paths to local paths, e.g. {\"/tmp/data\": \"/my/local/data\"}"
         },
+        "exclude_list": {
+            "description": "List of file types or directories to exclude when rsyncing to and from remote servers."
+        },
         "initialization_commands": {
             "$ref": "#/definitions/commands",
             "description": "List of commands that will be run before `setup_commands`. If docker is enabled, these commands will run outside the container and before docker is setup."

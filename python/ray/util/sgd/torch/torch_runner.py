@@ -198,6 +198,8 @@ class TorchRunner:
             USE_FP16: self.use_fp16,
             SCHEDULER_STEP: self.scheduler_step_freq
         })
+        # import pdb
+        # pdb.set_trace()
         with self.timers.record("train_epoch"):
             if iterator is None:
                 iterator = iter(self.train_loader)
@@ -211,6 +213,7 @@ class TorchRunner:
                 iterator = map(format_batch, iterator)
             if num_steps:
                 iterator = itertools.islice(iterator, num_steps)
+
             train_stats = self.training_operator.train_epoch(iterator, info)
 
         self.epochs += 1

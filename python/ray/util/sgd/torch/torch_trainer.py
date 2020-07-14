@@ -594,6 +594,7 @@ class TorchTrainer:
         return self.local_worker.training_operator
 
     def state_dict(self):
+        # Local worker is a torch runner object
         return self.local_worker.state_dict()
 
     def load_state_dict(self, state_dict, blocking=False):
@@ -616,6 +617,9 @@ class TorchTrainer:
             checkpoint (str): Path to target checkpoint file.
         """
         torch.save(self.state_dict(), checkpoint)
+        # from bandu.utils.torch_util import match_model, load_model_from_chkpt
+        # model2 = load_model_from_chkpt(checkpoint)
+        # match_model(self.get_model(), model2)
         return checkpoint
 
     def load(self, checkpoint):

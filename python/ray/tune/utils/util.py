@@ -146,6 +146,8 @@ def merge_dicts(d1, d2):
     Returns:
          dict: A new dict that is d1 and d2 deep merged.
     """
+    print("d1")
+    print(type(d1))
     merged = copy.deepcopy(d1)
     deep_update(merged, d2, True, [])
     return merged

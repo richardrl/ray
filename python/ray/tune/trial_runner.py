@@ -342,9 +342,15 @@ class TrialRunner:
             self.trial_executor.on_no_available_trials(self)
 
         self._stop_experiment_if_needed()
+        #
+        # if self._iteration % 800 == 0:
+        #     import pdb
+        #     pdb.set_trace()
 
         try:
             with warn_if_slow("experiment_checkpoint"):
+                # print("iteration")
+                # print(self._iteration)
                 self.checkpoint()
         except Exception:
             logger.exception("Trial Runner checkpointing failed.")
