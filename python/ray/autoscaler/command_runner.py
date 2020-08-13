@@ -309,6 +309,7 @@ class SSHCommandRunner(CommandRunnerInterface):
             self.ssh_private_key,
             self.ssh_control_path,
             ProxyCommand=self.ssh_proxy_command)
+        self.exclude_list = exclude_list
 
     def _get_node_ip(self):
         if self.use_internal_ip:

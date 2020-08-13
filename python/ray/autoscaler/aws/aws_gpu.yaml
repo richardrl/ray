@@ -104,16 +104,16 @@ worker_nodes:
 # Files or directories to copy to the head and worker nodes. The format is a
 # dictionary from REMOTE_PATH: LOCAL_PATH, e.g.
 file_mounts: {
-  # "/home/ubuntu/bandu_code": "~/improbable/bandu_code",
-  # "/home/ubuntu/tmp/.ssh": "~/.ssh/id_rsa",
+   "/home/ubuntu/bandu_code": "~/improbable/bandu_code",
+   "/home/ubuntu/tmp/.ssh": "~/.ssh/id_rsa",
 }
 
-# exclude_list:
-#   - "out/"
-#   - ".git/"
-#   - "bandu/vr/logs/"
-#   - "histograms/"
-#   - "bandu/dataloader_pkls"
+exclude_list:
+ - "out/"
+ - ".git/"
+ - "bandu/vr/logs/"
+ - "histograms/"
+ - "bandu/dataloader_pkls"
 
 # List of commands that will be run before `setup_commands`. If docker is
 # enabled, these commands will run outside the container and before docker
