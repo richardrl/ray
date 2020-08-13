@@ -287,7 +287,7 @@ class SSHOptions:
 
 class SSHCommandRunner(CommandRunnerInterface):
     def __init__(self, log_prefix, node_id, provider, auth_config,
-                 cluster_name, process_runner, use_internal_ip):
+                 cluster_name, process_runner, use_internal_ip, exclude_list=None):
 
         ssh_control_hash = hashlib.md5(cluster_name.encode()).hexdigest()
         ssh_user_hash = hashlib.md5(getuser().encode()).hexdigest()
@@ -484,13 +484,22 @@ class SSHCommandRunner(CommandRunnerInterface):
 
     def run_rsync_up(self, source, target):
         self._set_ssh_ip_if_required()
+        exclude_cmds = ["--exclude={}".format(item) for item in self.exclude_list]
+        # command = [
+        #     "rsync", "--rsh",
+        #     subprocess.list2cmdline(
+        #         ["ssh"] + self.ssh_options.to_ssh_options_list(timeout=120)),
+        #     "-avz", source, "{}@{}:{}".format(self.ssh_user, self.ssh_ip,
+        #                                       target)
+        # ]
+
         command = [
-            "rsync", "--rsh",
-            subprocess.list2cmdline(
-                ["ssh"] + self.ssh_options.to_ssh_options_list(timeout=120)),
-            "-avz", source, "{}@{}:{}".format(self.ssh_user, self.ssh_ip,
-                                              target)
+            "rsync",
+            "-e",
+            " ".join(["ssh"] + self.ssh_options.to_ssh_options_list(timeout=120)),
+            "-avz", *exclude_cmds, source, "{}@{}:{}".format(self.ssh_user, self.ssh_ip, target)
         ]
+
         cli_logger.verbose("Running `{}`", cf.bold(" ".join(command)))
         self._run_helper(command, silent=is_rsync_silent())
 

@@ -33,6 +33,7 @@ class NodeUpdater:
                  auth_config,
                  cluster_name,
                  file_mounts,
+                 exclude_list,
                  initialization_commands,
                  setup_commands,
                  ray_start_commands,
@@ -48,7 +49,7 @@ class NodeUpdater:
                            or provider_config.get("use_internal_ips", False))
         self.cmd_runner = provider.get_command_runner(
             self.log_prefix, node_id, auth_config, cluster_name,
-            process_runner, use_internal_ip, docker_config)
+            process_runner, use_internal_ip, docker_config,  exclude_list)
 
         self.daemon = True
         self.process_runner = process_runner
