@@ -1187,10 +1187,23 @@ def rsync_up(cluster_config_file, source, target, cluster_name, all_nodes,
     type=str,
     help="(deprecated) Use '-- --arg1 --arg2' for script args.")
 @click.argument("script_args", nargs=-1)
+@click.option(
+    "--dump-command-output",
+    is_flag=True,
+    default=False,
+    help=("Print command output straight to "
+          "the terminal instead of redirecting to a file."))
+@click.option(
+    "--use-login-shells/--use-normal-shells",
+    is_flag=True,
+    default=True,
+    help=("Ray uses login shells (bash --login -i) to run cluster commands "
+          "by default. If your workflow is compatible with normal shells, "
+          "this can be disabled for a better user experience."))
 @add_click_options(logging_options)
 def submit(cluster_config_file, screen, tmux, stop, start, cluster_name,
            port_forward, script, args, script_args, log_new_style, log_color,
-           verbose):
+           verbose, dump_command_output, use_login_shells):
     """Uploads and runs a script on the specified cluster.
 
     The script is automatically synced to the following location:
@@ -1234,7 +1247,7 @@ def submit(cluster_config_file, screen, tmux, stop, start, cluster_name,
 
     if start:
         create_or_update_cluster(cluster_config_file, None, None, False, False,
-                                 True, cluster_name, False)
+                                 True, cluster_name, False, dump_command_output, use_login_shells)
     target = os.path.basename(script)
     target = os.path.join("~", target)
     rsync(cluster_config_file, script, target, cluster_name, down=False)
