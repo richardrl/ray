@@ -1099,20 +1099,26 @@ def attach(cluster_config_file, start, screen, tmux, cluster_name, new,
 @click.argument("source", required=False, type=str)
 @click.argument("target", required=False, type=str)
 @click.option(
+    "--all-nodes",
+    "-A",
+    is_flag=True,
+    required=False,
+    help="Download from all nodes (workers and head).")
+@click.option(
     "--cluster-name",
     "-n",
     required=False,
     type=str,
     help="Override the configured cluster name.")
 @add_click_options(logging_options)
-def rsync_down(cluster_config_file, source, target, cluster_name,
+def rsync_down(cluster_config_file, source, target, cluster_name, all_nodes,
                log_new_style, log_color, verbose):
     """Download specific files from a Ray cluster."""
     cli_logger.old_style = not log_new_style
     cli_logger.color_mode = log_color
     cli_logger.verbosity = verbose
 
-    rsync(cluster_config_file, source, target, cluster_name, down=True)
+    rsync(cluster_config_file, source, target, cluster_name, down=True, all_nodes=all_nodes)
 
 
 @cli.command()

@@ -924,8 +924,10 @@ def rsync(config_file: str,
                 # print rsync progress for single file rsync
                 cmd_output_util.set_output_redirected(False)
                 set_rsync_silent(False)
-
-                rsync(source, target)
+                try:
+                    rsync(source, target)
+                except:
+                    print(f"Rsync failed for node {node_id} \n")
             else:
                 updater.sync_file_mounts(rsync)
 

@@ -486,19 +486,12 @@ class SSHCommandRunner(CommandRunnerInterface):
     def run_rsync_up(self, source, target):
         self._set_ssh_ip_if_required()
         exclude_cmds = ["--exclude={}".format(item) for item in self.exclude_list]
-        # command = [
-        #     "rsync", "--rsh",
-        #     subprocess.list2cmdline(
-        #         ["ssh"] + self.ssh_options.to_ssh_options_list(timeout=120)),
-        #     "-avz", source, "{}@{}:{}".format(self.ssh_user, self.ssh_ip,
-        #                                       target)
-        # ]
-
         command = [
-            "rsync",
-            "-e",
-            " ".join(["ssh"] + self.ssh_options.to_ssh_options_list(timeout=120)),
-            "-avz", *exclude_cmds, source, "{}@{}:{}".format(self.ssh_user, self.ssh_ip, target)
+            "rsync", "--rsh",
+            subprocess.list2cmdline(
+                ["ssh"] + self.ssh_options.to_ssh_options_list(timeout=120)),
+            "-avz", *exclude_cmds, source, "{}@{}:{}".format(self.ssh_user, self.ssh_ip,
+                                              target)
         ]
 
         cli_logger.verbose("Running `{}`", cf.bold(" ".join(command)))
@@ -542,9 +535,11 @@ class DockerCommandRunner(SSHCommandRunner):
             exit_on_fail=False,
             port_forward=None,
             with_output=False,
-            run_env="host",
+            run_env="auto",
             ssh_options_override_ssh_key="",
     ):
+        if run_env == "auto":
+            run_env = "host" if cmd.find("docker") == 0 else "docker"
 
         if run_env == "docker":
             cmd = self._docker_expand_user(cmd, any_char=True)
